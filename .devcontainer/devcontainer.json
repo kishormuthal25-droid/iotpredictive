@@ -1,0 +1,49 @@
+{
+  "name": "IoT Predictive Maintenance System",
+  "image": "mcr.microsoft.com/devcontainers/python:3.11",
+
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {},
+    "ghcr.io/devcontainers/features/git:1": {}
+  },
+
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.linting.enabled": true,
+        "python.linting.pylintEnabled": true
+      },
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-toolsai.jupyter"
+      ]
+    }
+  },
+
+  "postCreateCommand": "pip install -r requirements.txt",
+
+  "forwardPorts": [8060, 5000],
+  "portsAttributes": {
+    "8060": {
+      "label": "IoT Dashboard",
+      "onAutoForward": "notify"
+    },
+    "5000": {
+      "label": "MLflow",
+      "onAutoForward": "silent"
+    }
+  },
+
+  "remoteUser": "vscode",
+
+  "containerEnv": {
+    "ENVIRONMENT": "development",
+    "PYTHONUNBUFFERED": "1"
+  },
+
+  "mounts": [
+    "source=iot-data-cache,target=/workspace/data,type=volume"
+  ]
+}
