@@ -1,0 +1,105 @@
+# Core Dependencies
+numpy==1.24.3
+pandas==2.0.3
+scipy==1.11.1
+scikit-learn==1.3.0
+h5py==3.9.0
+matplotlib==3.7.2
+seaborn==0.12.2
+
+# Deep Learning Framework (CPU version for local deployment)
+tensorflow==2.13.0  # CPU version
+keras==2.13.0
+
+# Time Series Specific
+statsmodels==0.14.0
+prophet==1.1.4  # Optional for additional forecasting
+tslearn==0.6.1
+
+# Data Streaming and Message Queue
+kafka-python==2.0.2
+confluent-kafka==2.2.0  # Alternative kafka client
+redis==4.6.0  # For caching
+
+# Database
+psycopg2-binary==2.9.7  # PostgreSQL adapter
+sqlalchemy==2.0.19
+alembic==1.11.2  # Database migrations
+
+# Dashboard and Visualization
+dash==2.11.1
+dash-bootstrap-components==1.4.2
+plotly==5.15.0
+dash-daq==0.5.0  # Additional dashboard components
+dash-extensions==1.0.1
+
+# Optimization and Scheduling
+pulp==2.7.0  # Linear programming
+ortools==9.6.2534  # Google OR-Tools as alternative
+networkx==3.1  # For dependency graphs
+
+# Configuration Management
+pyyaml==6.0.1
+python-dotenv==1.0.0
+configparser==6.0.0
+
+# Logging and Monitoring
+loguru==0.7.0
+colorlog==6.7.0
+
+# Email and Notifications
+secure-smtplib==0.1.1
+email-validator==2.0.0
+yagmail==0.15.293  # Simplified email sending
+
+# API and Web Framework (for backend services)
+fastapi==0.100.0
+uvicorn==0.23.1
+pydantic==2.1.1
+
+# Testing
+pytest==7.4.0
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+pytest-mock==3.11.1
+
+# Development Tools
+black==23.7.0  # Code formatting
+flake8==6.0.0  # Linting
+mypy==1.4.1  # Type checking
+isort==5.12.0  # Import sorting
+pre-commit==3.3.3
+
+# Data Processing and Utilities
+joblib==1.3.1  # Parallel processing and model serialization
+tqdm==4.65.0  # Progress bars
+python-dateutil==2.8.2
+pytz==2023.3
+
+# MLOps and Model Management
+mlflow==2.8.1  # Model registry and experiment tracking
+boto3==1.28.85  # AWS SDK for S3 artifact storage (optional)
+
+# Additional ML/Analytics
+xgboost==1.7.6  # For comparison with deep learning models
+lightgbm==4.0.0  # Alternative gradient boosting
+imbalanced-learn==0.11.0  # For handling imbalanced datasets
+
+# System Monitoring
+psutil==5.9.5  # System and process utilities
+gputil==1.4.0  # GPU monitoring (even though not using GPU)
+
+# Data Validation
+cerberus==1.3.5
+marshmallow==3.20.1
+
+# Async Support
+aiofiles==23.1.0
+asyncio==3.4.3
+aioredis==2.0.1
+
+# Additional Utilities
+click==8.1.6  # CLI creation
+rich==13.5.2  # Rich terminal output
+tabulate==0.9.0  # Table formatting
+humanize==4.7.0  # Human-readable formats

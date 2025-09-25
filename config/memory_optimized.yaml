@@ -1,0 +1,116 @@
+# Memory-Optimized Configuration for Low-RAM Systems
+# Use this config for systems with <2GB available RAM
+
+# Set environment to testing with minimal resources
+environment: testing
+system:
+  project_name: "IoT Anomaly Detection System"
+  debug: false  # Disable debug to save memory
+  log_level: "WARNING"  # Reduce logging overhead
+
+# Minimal MLflow configuration
+mlflow:
+  enabled: true
+  tracking_uri: "./mlruns"
+  model_cache_size: 3  # Only cache 3 models max
+  lazy_loading: true
+  warmup_models: []  # No preloading
+
+# Reduce model complexity for testing
+anomaly_detection:
+  lstm_predictor:
+    enabled: true
+    training:
+      epochs: 2  # Reduced from 5
+      batch_size: 16  # Reduced from 32
+    architecture:
+      layers: [64, 32]  # Reduced from [128, 64, 32]
+
+  lstm_autoencoder:
+    enabled: false  # Disable to save memory
+
+  lstm_vae:
+    enabled: false  # Disable to save memory
+
+# Minimal dashboard settings
+dashboard:
+  server:
+    host: "127.0.0.1"
+    port: 8060
+    debug: false  # Disable debug mode
+
+  ui:
+    refresh_interval: 10000  # Slower refresh
+    max_points_display: 500  # Reduced from 1000
+    enable_real_time_updates: false  # Disable for memory
+
+  components:
+    enable_3d_plots: false
+    enable_animations: false  # Disable animations
+    enable_export: false  # Disable to save memory
+    enable_risk_matrix: false  # Disable complex features
+    enable_scenario_analysis: false
+    enable_failure_probability: false
+
+  performance:
+    cache:
+      enabled: false  # Disable caching to save memory
+    limits:
+      max_data_points: 1000  # Reduced from 10000
+      max_historical_data: 168  # 1 week instead of 1 year
+    resources:
+      memory_limit_mb: 256  # Reduced from 2048
+
+# Minimal preprocessing
+preprocessing:
+  features:
+    use_rolling_stats: false  # Disable to save memory
+    use_fft_features: false
+    use_wavelet_features: false
+
+  cleaning:
+    remove_outliers: false  # Skip expensive operations
+    interpolate_missing: false
+
+# Disable resource-intensive features
+forecasting:
+  enabled: false  # Disable forecasting for testing
+
+failure_probability:
+  enabled: false  # Disable for testing
+
+scenario_analysis:
+  enabled: false  # Disable for testing
+
+risk_assessment:
+  enabled: false  # Disable for testing
+
+# Minimal performance settings
+performance:
+  memory:
+    max_cache_size: 100  # Reduced from 1000 MB
+    gc_threshold: 0.6  # More aggressive garbage collection
+
+  cpu:
+    n_jobs: 2  # Limit CPU cores used
+    thread_pool_size: 2
+
+  batch:
+    enable_batching: true
+    batch_timeout: 5000  # Longer timeout
+    max_batch_size: 100  # Smaller batches
+
+# Minimal logging
+logging:
+  file:
+    enabled: false  # Disable file logging
+  console:
+    enabled: true
+    format: "%(levelname)s - %(message)s"  # Shorter format
+
+# Test-specific settings
+testing:
+  skip_data_validation: true
+  use_minimal_dataset: true
+  parallel_tests: false  # Run tests sequentially
+  test_timeout: 60  # Shorter timeout

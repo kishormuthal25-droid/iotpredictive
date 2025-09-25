@@ -1,0 +1,187 @@
+# Quick Training Configuration - Option 2: Balanced Training (15-25 minutes)
+# Optimized for speed while maintaining good model quality
+
+# Data paths
+data:
+  smap_path: "data/raw/smap"
+  msl_path: "data/raw/msl"
+  models_path: "data/models"
+  cache_path: "data/cache"
+
+# Quick training parameters - optimized for 15-25 minute completion
+training:
+  # Reduced epochs for speed
+  epochs: 30                    # Down from 50-100
+  batch_size: 32               # Standard batch size
+  validation_split: 0.15       # Reduced from 0.2 for faster training
+  sequence_length: 40          # Reduced from 50
+
+  # Aggressive early stopping for speed
+  early_stopping_patience: 5   # Down from 10-15
+  reduce_lr_patience: 3        # Down from 5
+  min_lr: 1e-6
+
+  # Memory and performance optimizations
+  use_multiprocessing: true
+  workers: 4
+  max_queue_size: 20
+
+  # Quick validation settings
+  min_samples_for_training: 300  # Reduced from 500
+  validation_frequency: 1        # Validate every epoch
+
+# Model architecture - equipment-specific complexity
+models:
+  # LSTM Autoencoder settings
+  lstm_autoencoder:
+    # Reduced model complexity for speed
+    encoder_units: [32, 16]      # Down from [64, 32]
+    decoder_units: [16, 32]      # Mirror encoder
+    latent_dim: 8                # Down from 16
+    dropout_rate: 0.2
+    learning_rate: 0.002         # Slightly higher for faster convergence
+    use_bidirectional: false     # Disabled for speed
+    use_batch_norm: true
+    l2_reg: 0.005               # Reduced regularization
+
+  # Equipment-specific scaling
+  complexity_by_criticality:
+    CRITICAL:
+      encoder_units: [48, 24]    # Slightly larger for critical equipment
+      latent_dim: 12
+      epochs: 35                 # A few more epochs for critical systems
+    HIGH:
+      encoder_units: [32, 16]    # Standard complexity
+      latent_dim: 8
+      epochs: 30
+    MEDIUM:
+      encoder_units: [24, 12]    # Reduced for non-critical
+      latent_dim: 6
+      epochs: 25
+    LOW:
+      encoder_units: [16, 8]     # Minimal for low priority
+      latent_dim: 4
+      epochs: 20
+
+# NASA Equipment specific settings
+nasa_equipment:
+  # SMAP Equipment
+  smap:
+    PWR: {criticality: "CRITICAL", sensors: 25}   # Power systems are critical
+    COM: {criticality: "HIGH", sensors: 18}       # Communication systems
+    ATT: {criticality: "HIGH", sensors: 20}       # Attitude control
+    THM: {criticality: "MEDIUM", sensors: 15}     # Thermal management
+    PAY: {criticality: "MEDIUM", sensors: 12}     # Payload systems
+
+  # MSL Equipment
+  msl:
+    MOB: {criticality: "CRITICAL", sensors: 30}   # Mobility (rover movement)
+    PWR: {criticality: "CRITICAL", sensors: 22}   # Power systems
+    ENV: {criticality: "HIGH", sensors: 16}       # Environmental monitoring
+    SCI: {criticality: "MEDIUM", sensors: 14}     # Science instruments
+    COM: {criticality: "HIGH", sensors: 19}       # Communications
+    NAV: {criticality: "HIGH", sensors: 21}       # Navigation
+
+# Training optimization settings
+optimization:
+  # Parallel training settings
+  enable_parallel_training: true
+  max_parallel_models: 3        # Train 3 models simultaneously
+  memory_fraction_per_model: 0.25
+
+  # Progress tracking
+  enable_progress_tracking: true
+  progress_update_interval: 2   # Update every 2 seconds
+  save_progress_to_file: true
+
+  # Model saving
+  save_best_only: true
+  save_frequency: "epoch"       # Save after each epoch improvement
+  backup_models: false          # Skip backup for speed
+
+  # Memory management
+  clear_session_between_models: true
+  garbage_collect_frequency: 5  # Every 5 epochs
+
+  # Quick evaluation
+  evaluation_samples: 1000      # Reduced from full dataset
+  skip_detailed_metrics: false
+
+# Performance thresholds (stop training if reached)
+performance_targets:
+  min_accuracy: 0.85           # Stop if accuracy reaches 85%
+  min_f1_score: 0.80          # Stop if F1 score reaches 80%
+  max_loss: 0.3               # Stop if loss drops below 0.3
+
+# Logging and monitoring
+logging:
+  level: "INFO"
+  save_training_logs: true
+  log_file: "logs/quick_training.log"
+  console_output: true
+
+  # Progress display settings
+  show_progress_bar: true
+  show_epoch_details: true
+  show_model_architecture: false  # Skip for speed
+
+# Resource management
+resources:
+  # CPU optimization (since using TensorFlow CPU)
+  tf_num_threads: 4            # Use 4 CPU threads
+  tf_inter_op_threads: 2       # Parallel operations
+  tf_intra_op_threads: 4       # Within operation threads
+
+  # Memory settings
+  tf_memory_growth: true       # Allow memory growth
+  max_memory_usage: 0.7        # Use up to 70% of available memory
+
+  # Disable GPU to avoid overhead
+  disable_gpu: true
+
+# Data preprocessing - optimized for speed
+preprocessing:
+  # Quick normalization
+  scaler_type: "minmax"        # MinMax is faster than StandardScaler
+  normalize_per_equipment: true
+  cache_preprocessed_data: true
+
+  # Feature selection
+  feature_selection: false     # Skip feature selection for speed
+  remove_outliers: false       # Skip outlier removal for speed
+
+  # Quick windowing
+  overlap_ratio: 0.5          # 50% overlap instead of 75%
+
+# Model validation
+validation:
+  # Quick validation strategy
+  validation_strategy: "holdout"  # Single holdout instead of cross-validation
+  test_size: 0.1                  # Small test set for speed
+  shuffle: true
+  random_state: 42
+
+  # Skip expensive validation
+  skip_statistical_tests: true
+  skip_detailed_analysis: true
+
+# Alert and notification settings
+alerts:
+  notify_on_completion: true
+  notify_on_failure: true
+  send_progress_updates: false  # Reduce notification overhead
+
+# Equipment priority for training order (train critical systems first)
+training_priority:
+  - "SMAP-PWR-001"  # Power systems first
+  - "MSL-MOB-001"   # Mobility critical
+  - "MSL-MOB-002"   # Mobility backup
+  - "SMAP-COM-001"  # Communications
+  - "MSL-COM-001"   # MSL Communications
+  - "SMAP-ATT-001"  # Attitude control
+  - "MSL-NAV-001"   # Navigation
+  - "MSL-PWR-001"   # MSL Power
+  - "MSL-ENV-001"   # Environmental
+  - "SMAP-THM-001"  # Thermal
+  - "SMAP-PAY-001"  # Payload
+  - "MSL-SCI-001"   # Science instruments

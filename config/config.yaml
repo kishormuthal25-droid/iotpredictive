@@ -1,0 +1,855 @@
+# IoT Anomaly Detection System Configuration
+# Environment: development | staging | production
+environment: development
+
+# System-wide settings
+system:
+  project_name: "IoT Anomaly Detection System"
+  version: "1.0.0"
+  debug: true
+  log_level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  timezone: "UTC"
+  random_seed: 42
+
+# Data paths configuration
+paths:
+  # Base paths
+  data_root: "./data"
+  raw_data: "./data/raw"
+  processed_data: "./data/processed"
+  models: "./data/models"
+  logs: "./logs"
+  cache: "./cache"
+  
+  # Specific data paths
+  smap_data: "./data/raw/smap"
+  msl_data: "./data/raw/msl"
+  
+  # File patterns
+  smap_pattern: "*.npy"
+  msl_pattern: "*.npy"
+  h5_pattern: "*.h5"
+
+# Data ingestion settings
+data_ingestion:
+  # Streaming simulation
+  simulation:
+    enabled: true
+    speed_multiplier: 1.0  # 1.0 = real-time, 2.0 = 2x speed
+    batch_size: 100
+    buffer_size: 1000
+    
+  # Kafka configuration
+  kafka:
+    enabled: false  # Set to true if using Kafka
+    bootstrap_servers: "localhost:9092"
+    topics:
+      smap: "iot-smap-telemetry"
+      msl: "iot-msl-telemetry"
+      anomalies: "iot-anomalies"
+      alerts: "iot-alerts"
+    producer:
+      acks: "all"
+      retries: 3
+      batch_size: 16384
+      linger_ms: 10
+      compression_type: "snappy"
+    consumer:
+      group_id: "iot-anomaly-detector"
+      auto_offset_reset: "latest"
+      enable_auto_commit: true
+      max_poll_records: 500
+  
+  # Database configuration
+  database:
+    enabled: true
+    type: "sqlite"  # postgresql, sqlite, timescaledb
+    
+    # PostgreSQL/TimescaleDB settings
+    postgresql:
+      host: "localhost"
+      port: 5432
+      database: "iot_telemetry"
+      username: "iot_user"
+      password: "iot_password"  # Use environment variable in production
+      pool_size: 10
+      max_overflow: 20
+      
+    # SQLite settings (for local development)
+    sqlite:
+      path: "./data/iot_telemetry.db"
+      
+    # TimescaleDB specific
+    timescale:
+      enabled: false
+      chunk_time_interval: "1 day"
+      compression_after: "7 days"
+      retention_period: "90 days"
+  
+  # Redis cache configuration
+  redis:
+    enabled: false
+    host: "localhost"
+    port: 6379
+    db: 0
+    password: null
+    max_connections: 50
+    ttl: 3600  # seconds
+
+# Data preprocessing settings
+preprocessing:
+  # Normalization
+  normalization:
+    method: "minmax"  # minmax, standard, robust
+    feature_range: [0, 1]
+    
+  # Window settings for time series
+  window:
+    size: 100  # Number of time steps
+    stride: 10  # Sliding window stride
+    
+  # Feature engineering
+  features:
+    use_rolling_stats: true
+    rolling_window_sizes: [10, 30, 60]
+    use_fft_features: false
+    use_wavelet_features: false
+    
+  # Data cleaning
+  cleaning:
+    remove_outliers: true
+    outlier_threshold: 3  # Standard deviations
+    interpolate_missing: true
+    interpolation_method: "linear"
+
+# Anomaly detection models configuration
+anomaly_detection:
+  # General settings
+  general:
+    sequence_length: 100
+    prediction_length: 10
+    threshold_method: "dynamic"  # static, dynamic, adaptive
+    contamination: 0.1  # Expected proportion of anomalies
+    
+  # LSTM Predictor
+  lstm_predictor:
+    enabled: true
+    architecture:
+      layers: [128, 64, 32]
+      dropout: 0.2
+      activation: "relu"
+      recurrent_activation: "sigmoid"
+    training:
+      epochs: 5
+      batch_size: 32
+      learning_rate: 0.001
+      early_stopping_patience: 10
+      validation_split: 0.2
+    threshold:
+      method: "percentile"
+      value: 95  # 95th percentile of errors
+      
+  # LSTM Autoencoder
+  lstm_autoencoder:
+    enabled: true
+    architecture:
+      encoder_layers: [128, 64, 32]
+      decoder_layers: [32, 64, 128]
+      latent_dim: 16
+      dropout: 0.2
+    training:
+      epochs: 5
+      batch_size: 32
+      learning_rate: 0.001
+      loss: "mse"
+      optimizer: "adam"
+    threshold:
+      method: "mean_std"
+      n_std: 3  # mean + 3*std
+      
+  # LSTM VAE
+  lstm_vae:
+    enabled: true
+    architecture:
+      encoder_layers: [128, 64]
+      decoder_layers: [64, 128]
+      latent_dim: 20
+      dropout: 0.2
+    training:
+      epochs: 5
+      batch_size: 32
+      learning_rate: 0.001
+      kl_weight: 0.1  # Weight for KL divergence loss
+      reconstruction_weight: 0.9
+    threshold:
+      method: "elbo"  # Evidence lower bound
+      percentile: 95
+
+# Enhanced Forecasting & Predictions Module Configuration
+forecasting:
+  # General settings
+  general:
+    forecast_horizon: 24  # Time steps to forecast
+    update_frequency: 3600  # Seconds between model updates
+    confidence_levels: [0.8, 0.9, 0.95]  # Confidence levels for prediction intervals
+    enable_uncertainty_quantification: true
+    enable_failure_probability: true
+    enable_risk_assessment: true
+
+  # Enhanced forecasting with uncertainty quantification
+  enhanced:
+    enabled: true
+    base_model: "transformer"  # "transformer" or "lstm"
+    uncertainty_methods: ["quantile", "ensemble", "conformal"]
+    ensemble_size: 5
+    quantile_levels: [0.1, 0.25, 0.5, 0.75, 0.9]
+    bootstrap_samples: 100
+
+    # Conformal prediction settings
+    conformal:
+      alpha: 0.1  # Miscoverage level (1-alpha = coverage level)
+      calibration_ratio: 0.2
+
+  # Transformer model
+  transformer:
+    enabled: true
+    architecture:
+      d_model: 512
+      n_heads: 8
+      n_layers: 4
+      d_ff: 2048
+      dropout: 0.1
+      max_seq_length: 200
+    training:
+      epochs: 10
+      batch_size: 16
+      learning_rate: 0.0001
+      warmup_steps: 1000
+
+  # LSTM forecaster (baseline)
+  lstm:
+    enabled: true
+    architecture:
+      layers: [128, 64]
+      dropout: 0.2
+    training:
+      epochs: 5
+      batch_size: 32
+      learning_rate: 0.001
+
+# Failure Probability Estimation Configuration
+failure_probability:
+  enabled: true
+
+  # Estimation parameters
+  estimation:
+    time_horizon: 168  # Hours (1 week)
+    update_frequency: 3600  # Seconds between updates
+
+  # Failure thresholds
+  thresholds:
+    degradation_rate: 0.1
+    anomaly_rate: 0.05
+    sensor_deviation: 3.0
+
+  # Survival models (Weibull distribution)
+  survival_models:
+    default_shape: 2.0
+    default_scale: 8760  # 1 year in hours
+    use_historical_data: true
+
+  # Degradation modeling
+  degradation_models:
+    default_type: "linear"  # "linear", "exponential", "power", "ml"
+    failure_threshold: 0.8
+    enable_ml_degradation: true
+
+  # Uncertainty quantification
+  uncertainty:
+    model_uncertainty: 0.1
+    data_uncertainty: 0.05
+    environmental_uncertainty: 0.02
+
+  # Component-specific settings
+  components:
+    power_system:
+      criticality: "critical"
+      cascade_impact: 0.8
+      mtbf_hours: 8760  # 1 year
+    communication:
+      criticality: "high"
+      cascade_impact: 0.3
+      mtbf_hours: 17520  # 2 years
+    mobility:
+      criticality: "critical"
+      cascade_impact: 0.6
+      mtbf_hours: 4380  # 6 months
+
+# What-If Analysis & Scenario Modeling Configuration
+scenario_analysis:
+  enabled: true
+
+  # Simulation parameters
+  simulation:
+    monte_carlo_runs: 1000
+    time_horizon: 168  # Hours
+    random_seed: 42
+
+  # Maintenance strategies
+  strategies:
+    reactive:
+      enabled: true
+      description: "Fix after failure"
+      cost_multiplier: 1.0
+    preventive:
+      enabled: true
+      description: "Scheduled maintenance"
+      cost_multiplier: 0.7
+      interval_hours: 720  # 30 days
+    predictive:
+      enabled: true
+      description: "Condition-based maintenance"
+      cost_multiplier: 0.8
+      threshold: 0.3
+    hybrid:
+      enabled: true
+      description: "Combined approach"
+      cost_multiplier: 0.75
+
+  # Resource constraints
+  resources:
+    technicians:
+      total_available: 5
+      hourly_cost: 50
+      max_hours_per_day: 8
+    spare_parts:
+      total_available: 100
+      cost_per_unit: 10
+    budget:
+      default_limit: 100000
+      emergency_reserve: 0.2
+
+  # Optimization settings
+  optimization:
+    enabled: true
+    objective: "minimize_cost"  # "minimize_cost", "minimize_downtime", "maximize_availability"
+    weights:
+      cost: 0.4
+      availability: 0.3
+      failures: 0.2
+      downtime: 0.1
+    solver_timeout: 300  # seconds
+
+# Risk Matrix & Assessment Configuration
+risk_assessment:
+  enabled: true
+
+  # Risk matrix parameters
+  risk_matrix:
+    probability_thresholds: [0.1, 0.3, 0.5, 0.7, 0.9]
+    impact_thresholds: [0.1, 0.3, 0.5, 0.7, 0.9]
+    risk_levels:
+      very_low:
+        min: 0.0
+        max: 0.1
+        color: "#2E8B57"
+        response_time: 168  # hours
+      low:
+        min: 0.1
+        max: 0.3
+        color: "#32CD32"
+        response_time: 72
+      medium:
+        min: 0.3
+        max: 0.5
+        color: "#FFD700"
+        response_time: 24
+      high:
+        min: 0.5
+        max: 0.7
+        color: "#FF8C00"
+        response_time: 8
+      very_high:
+        min: 0.7
+        max: 0.9
+        color: "#FF4500"
+        response_time: 4
+      critical:
+        min: 0.9
+        max: 1.0
+        color: "#DC143C"
+        response_time: 1
+
+  # Risk calculation weights
+  weights:
+    probability: 0.3
+    impact: 0.25
+    severity: 0.25
+    timeline: 0.2
+
+  # Impact factors
+  impact_factors:
+    financial_weight: 0.4
+    operational_weight: 0.3
+    safety_weight: 0.2
+    environmental_weight: 0.1
+
+  # Cost parameters for impact calculation
+  costs:
+    repair_costs:
+      critical: 50000
+      high: 20000
+      medium: 10000
+      low: 2000
+    downtime_cost_per_hour: 1000
+    cascade_failure_multiplier: 1.5
+
+  # Equipment criticality
+  equipment_criticality:
+    smap:
+      power_system: 1.0
+      attitude_control: 1.0
+      communication: 0.8
+      thermal_control: 0.8
+      payload_sensors: 0.8
+    msl:
+      mobility_front: 1.0
+      mobility_rear: 1.0
+      power_system: 1.0
+      navigation: 1.0
+      scientific: 0.8
+      communication: 0.8
+      environmental: 0.6
+
+  # Update frequency
+  update_frequency: 300  # seconds (5 minutes)
+
+# Maintenance scheduling configuration
+maintenance:
+  # Scheduler settings
+  scheduler:
+    algorithm: "optimization"  # optimization, greedy, priority
+    planning_horizon: 168  # Hours (1 week)
+    time_slots_per_day: 24
+    
+  # Optimization constraints
+  constraints:
+    max_technicians: 5
+    technician_hours_per_day: 8
+    maintenance_windows:
+      - start: "08:00"
+        end: "17:00"
+        days: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+      - start: "10:00"
+        end: "14:00"
+        days: ["Saturday"]
+    task_durations:  # Hours
+      critical: 4
+      high: 2
+      medium: 1
+      low: 0.5
+      
+  # Priority calculation
+  priority:
+    weights:
+      severity: 0.4
+      frequency: 0.2
+      impact: 0.3
+      age: 0.1
+    levels:
+      critical: 1000
+      high: 100
+      medium: 10
+      low: 1
+      
+  # Cost parameters
+  costs:
+    technician_hourly: 50  # $/hour
+    emergency_multiplier: 2.0
+    preventive_discount: 0.7
+    downtime_hourly: 500  # $/hour
+
+# Alert system configuration
+alerts:
+  # Email settings
+  email:
+    enabled: true
+    smtp_server: "smtp.gmail.com"
+    smtp_port: 587
+    use_tls: true
+    sender_email: "iot.alerts@example.com"
+    sender_password: "your_app_password"  # Use app-specific password
+    sender_name: "IoT Alert System"
+    
+    # Recipients
+    recipients:
+      default: ["maintenance.team@example.com"]
+      critical: ["manager@example.com", "maintenance.team@example.com"]
+      escalation: ["director@example.com"]
+    
+    # Templates
+    templates:
+      anomaly: "anomaly_alert.html"
+      maintenance: "maintenance_schedule.html"
+      daily_report: "daily_report.html"
+      
+  # Alert rules
+  rules:
+    anomaly_threshold: 0.8  # Confidence threshold
+    consecutive_anomalies: 3  # Number of consecutive anomalies to trigger alert
+    cooldown_period: 3600  # Seconds between alerts for same sensor
+    
+  # Notification settings
+  notifications:
+    batch_alerts: true
+    batch_interval: 300  # Seconds
+    max_batch_size: 10
+    priority_override:
+      critical: "immediate"
+      high: "5min"
+      medium: "30min"
+      low: "batch"
+
+# Enhanced Dashboard Configuration
+dashboard:
+  # Server settings
+  server:
+    host: "127.0.0.1"
+    port: 8050
+    debug: true
+    auto_reload: true
+
+  # UI settings
+  ui:
+    theme: "dark"  # light, dark
+    refresh_interval: 5000  # milliseconds
+    max_points_display: 1000
+    default_time_range: "1h"  # 1h, 6h, 24h, 7d, 30d
+    enable_real_time_updates: true
+
+  # Components
+  components:
+    enable_3d_plots: false  # Disable for CPU-only systems
+    enable_animations: true
+    enable_export: true
+    enable_risk_matrix: true
+    enable_scenario_analysis: true
+    enable_failure_probability: true
+
+  # Enhanced Pages with New Forecasting Features
+  pages:
+    - name: "Overview"
+      path: "/"
+      icon: "home"
+      description: "System overview and key metrics"
+    - name: "Anomaly Monitor"
+      path: "/anomalies"
+      icon: "warning"
+      description: "Real-time anomaly detection and alerts"
+    - name: "Enhanced Forecasting"
+      path: "/enhanced-forecast"
+      icon: "trending_up"
+      description: "Advanced forecasting with uncertainty quantification"
+      features:
+        - "Confidence intervals"
+        - "Quantile forecasting"
+        - "Ensemble predictions"
+        - "Uncertainty decomposition"
+    - name: "Failure Probability"
+      path: "/failure-probability"
+      icon: "error_outline"
+      description: "Equipment failure probability estimation"
+      features:
+        - "Time-to-failure predictions"
+        - "Degradation modeling"
+        - "Survival analysis"
+        - "Contributing factors analysis"
+    - name: "What-If Analysis"
+      path: "/scenario-analysis"
+      icon: "science"
+      description: "Maintenance strategy scenario modeling"
+      features:
+        - "Strategy comparison"
+        - "Resource optimization"
+        - "Cost-benefit analysis"
+        - "Monte Carlo simulation"
+    - name: "Risk Matrix"
+      path: "/risk-matrix"
+      icon: "security"
+      description: "Comprehensive equipment risk assessment"
+      features:
+        - "Interactive risk matrix"
+        - "Risk heatmaps"
+        - "Top risk components"
+        - "Mitigation recommendations"
+    - name: "Classic Forecasting"
+      path: "/forecast"
+      icon: "show_chart"
+      description: "Traditional forecasting dashboard"
+    - name: "Maintenance"
+      path: "/maintenance"
+      icon: "build"
+      description: "Maintenance scheduling and optimization"
+    - name: "Work Orders"
+      path: "/work-orders"
+      icon: "assignment"
+      description: "Work order management"
+    - name: "Settings"
+      path: "/settings"
+      icon: "settings"
+      description: "System configuration and preferences"
+
+  # Forecasting Dashboard Settings
+  forecasting_dashboard:
+    # Data refresh intervals
+    refresh_intervals:
+      enhanced_forecast: 30000  # 30 seconds
+      failure_probability: 60000  # 1 minute
+      risk_matrix: 300000  # 5 minutes
+      scenario_analysis: 300000  # 5 minutes
+
+    # Chart configurations
+    charts:
+      forecast_chart:
+        height: 500
+        show_confidence_bands: true
+        show_quantiles: true
+        enable_zoom: true
+        color_scheme: "plotly"
+      risk_matrix:
+        height: 500
+        show_background_regions: true
+        enable_hover: true
+        color_scheme: "risk"
+      heatmap:
+        height: 400
+        colorscale: "RdYlGn_r"
+        show_colorbar: true
+
+    # Table configurations
+    tables:
+      top_risks:
+        page_size: 10
+        sortable: true
+        searchable: true
+        export_enabled: true
+
+    # Export settings
+    export:
+      enabled: true
+      formats: ["png", "html", "pdf", "csv"]
+      default_format: "png"
+
+  # Risk Assessment Dashboard Settings
+  risk_dashboard:
+    # Update frequencies
+    update_frequencies:
+      risk_calculations: 300  # 5 minutes
+      trend_analysis: 1800  # 30 minutes
+      recommendations: 3600  # 1 hour
+
+    # Alert thresholds for dashboard
+    alert_thresholds:
+      critical_risk_count: 3
+      high_risk_percentage: 20
+      total_risk_exposure: 100000
+
+    # Display settings
+    display:
+      max_top_risks: 10
+      show_historical_trends: true
+      enable_drill_down: true
+      show_recommendations: true
+
+  # Scenario Analysis Dashboard Settings
+  scenario_dashboard:
+    # Default scenarios to load
+    default_scenarios:
+      - "reactive_baseline"
+      - "preventive_standard"
+      - "predictive_optimal"
+      - "hybrid_balanced"
+
+    # Simulation settings
+    simulation:
+      default_runs: 1000
+      max_runs: 10000
+      parallel_execution: true
+      cache_results: true
+
+    # Visualization settings
+    visualization:
+      show_confidence_intervals: true
+      enable_comparison_charts: true
+      show_cost_breakdown: true
+
+  # Performance settings
+  performance:
+    # Caching
+    cache:
+      enabled: true
+      forecast_cache_ttl: 1800  # 30 minutes
+      risk_cache_ttl: 300  # 5 minutes
+      scenario_cache_ttl: 3600  # 1 hour
+
+    # Data limits
+    limits:
+      max_data_points: 10000
+      max_forecast_horizon: 168  # 1 week
+      max_historical_data: 8760  # 1 year
+
+    # Resource management
+    resources:
+      max_concurrent_forecasts: 5
+      max_scenario_simulations: 3
+      memory_limit_mb: 2048
+
+# Model evaluation metrics
+evaluation:
+  metrics:
+    - "accuracy"
+    - "precision"
+    - "recall"
+    - "f1_score"
+    - "roc_auc"
+    - "confusion_matrix"
+  
+  visualization:
+    save_plots: true
+    plot_format: "png"
+    dpi: 100
+    
+  comparison:
+    cross_validation: true
+    n_folds: 5
+    test_size: 0.2
+
+# Logging configuration
+logging:
+  # File logging
+  file:
+    enabled: true
+    path: "./logs/iot_system.log"
+    max_bytes: 10485760  # 10MB
+    backup_count: 5
+    format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    
+  # Console logging
+  console:
+    enabled: true
+    colored: true
+    format: "%(asctime)s - %(levelname)s - %(message)s"
+    
+  # Specific loggers
+  loggers:
+    kafka:
+      level: "WARNING"
+    tensorflow:
+      level: "WARNING"
+    matplotlib:
+      level: "WARNING"
+
+# Performance optimization
+performance:
+  # Memory management
+  memory:
+    max_cache_size: 1000  # MB
+    gc_threshold: 0.8  # Trigger GC at 80% memory usage
+    
+  # CPU optimization
+  cpu:
+    n_jobs: -1  # Use all available cores
+    thread_pool_size: 4
+    
+  # Batch processing
+  batch:
+    enable_batching: true
+    batch_timeout: 1000  # milliseconds
+    max_batch_size: 1000
+
+# IoT Equipment Configuration
+iot_equipment:
+  # SMAP Satellite Components (25 sensors total)
+  smap:
+    total_components: 5
+    total_sensors: 25
+    components:
+      power_system: 6      # Solar panel, battery, distribution
+      communication: 5     # Antenna, signal strength, data transmission
+      attitude_control: 6  # Gyroscopes, accelerometers
+      thermal_control: 4   # Temperature sensors, heat exchangers
+      payload_sensors: 4   # Soil moisture detection equipment
+
+  # MSL Mars Rover Components (55 sensors total)
+  msl:
+    total_components: 7
+    total_sensors: 55
+    components:
+      mobility_front: 12   # Front wheel motors, suspension
+      mobility_rear: 6     # Rear wheel motors, suspension
+      power_system: 8      # RTG, batteries, power distribution
+      environmental: 12    # Atmospheric, temperature, dust sensors
+      scientific: 10       # Spectrometers, cameras, analysis tools
+      communication: 6     # Antennas, data buffers
+      navigation: 1        # IMU, positioning systems
+
+  # Equipment criticality levels
+  criticality:
+    critical: ["power_system", "mobility", "navigation", "attitude_control"]
+    high: ["communication", "scientific", "thermal_control", "payload_sensors"]
+    medium: ["environmental"]
+    low: []
+
+  # Maintenance scheduling priorities
+  maintenance:
+    priority_weights:
+      critical: 1000
+      high: 100
+      medium: 10
+      low: 1
+    response_times:  # Hours
+      critical: 1
+      high: 4
+      medium: 24
+      low: 168
+
+# Development settings
+development:
+  mock_data: false
+  skip_model_training: false
+  use_cached_models: true
+  profile_code: false
+  debug_mode: true
+
+# MLFlow Integration Configuration
+mlflow:
+  # Core settings
+  enabled: true  # Enable MLFlow integration as optional enhancement
+  required: false  # Dashboard works without MLFlow if true
+
+  # Connection settings
+  tracking_uri: "http://localhost:5000"
+  connection_timeout: 5.0  # Max time to wait for MLFlow connection
+  retry_attempts: 3
+  retry_delay: 2.0  # Seconds between retry attempts
+
+  # Background monitoring
+  background_sync: true  # Enable background connection monitoring
+  health_check_interval: 30  # Seconds between health checks
+
+  # Model management
+  model_cache_size: 25  # Max models to keep in memory
+  warmup_models: []  # Models to preload (empty for lazy loading)
+
+  # Feature flags
+  prefer_mlflow: false  # If true, prefer MLFlow over LazyManager when available
+  auto_reconnect: true  # Automatically reconnect when MLFlow becomes available
+  fallback_to_lazy: true  # Use LazyModelManager when MLFlow unavailable
+
+# Production settings
+production:
+  mock_data: false
+  skip_model_training: true
+  use_cached_models: true
+  profile_code: false
+  debug_mode: false
