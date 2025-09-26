@@ -674,7 +674,14 @@ class NASADataService:
             anomaly_rate = (len(recent_anomalies) / total_recent * 100) if total_recent > 0 else 0
 
             # Get enhanced model statistics
-            engine_stats = self.anomaly_engine.get_processing_statistics()
+            engine_stats = self.telemanom_integration.get_stats()
+
+            # Defensive: handle missing keys in engine_stats
+            def safe_get(d, key, default=None):
+                if key in d:
+                    return d[key]
+                logger.warning(f"Missing key in engine_stats: {key}")
+                return default
 
             return {
                 'total_equipment': len(all_equipment),
@@ -684,11 +691,11 @@ class NASADataService:
                 'active_anomalies': len(recent_anomalies),
                 'anomaly_rate': round(anomaly_rate, 1),
                 'processing_rate': round(self.processing_stats['processing_rate'], 1),
-                'trained_models': engine_stats['trained_models'],
-                'total_models': engine_stats['total_models'],
-                'models_trained_today': engine_stats['models_trained'],
+                'trained_models': safe_get(engine_stats, 'trained_models', 0),
+                'total_models': safe_get(engine_stats, 'total_models', 0),
+                'models_trained_today': safe_get(engine_stats, 'models_trained', 0),
                 'last_update': self.processing_stats['last_update'].isoformat(),
-                'last_training': engine_stats['last_training']
+                'last_training': safe_get(engine_stats, 'last_training', None)
             }
 
         except Exception as e:

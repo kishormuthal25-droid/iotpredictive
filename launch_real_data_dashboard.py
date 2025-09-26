@@ -880,20 +880,25 @@ def main():
     print("Press Ctrl+C to stop")
     print("=" * 55)
 
+    import signal
+    def handle_signal(sig, frame):
+        logger.error(f"Dashboard received shutdown signal: {sig}")
+        print(f"\nDashboard received shutdown signal: {sig}")
+        sys.exit(143)
+
+    signal.signal(signal.SIGTERM, handle_signal)
+    signal.signal(signal.SIGINT, handle_signal)
     try:
-        
         app.run(
             debug=False,  # Disable debug mode for production
             host='0.0.0.0',
             port=8060,
             dev_tools_hot_reload=False
         )
-
-
-    except KeyboardInterrupt:
-        print("\nDashboard stopped by user")
     except Exception as e:
+        logger.error(f"Dashboard crashed with error: {e}", exc_info=True)
         print(f"Error: {e}")
+        sys.exit(1)
 
 if __name__ == '__main__':
     main()

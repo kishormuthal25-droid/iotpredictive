@@ -55,8 +55,8 @@ class MLFlowTelemanoMIntegration:
     def _init_equipment_mapper(self):
         """Initialize equipment mapper for sensor metadata"""
         try:
-            from src.data_ingestion.equipment_mapper import EquipmentMapper
-            return EquipmentMapper()
+            from src.data_ingestion.equipment_mapper import IoTEquipmentMapper
+            return IoTEquipmentMapper()
         except Exception as e:
             logger.warning(f"Could not initialize equipment mapper: {e}")
             return None

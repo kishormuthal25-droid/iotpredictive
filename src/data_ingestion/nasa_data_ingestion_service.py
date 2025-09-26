@@ -21,6 +21,7 @@ import sys
 sys.path.append(str(Path(__file__).parent.parent.parent))
 from config.settings import settings, get_data_path
 from src.data_ingestion.database_manager import DatabaseManager, TelemetryData
+from sqlalchemy import func
 from src.data_ingestion.equipment_mapper import equipment_mapper
 
 # Setup logging
@@ -60,8 +61,9 @@ class NASADataIngestionService:
 
         logger.info("NASA Data Ingestion Service initialized")
 
+
     def _load_anomaly_labels(self) -> Dict[str, List[Dict[str, int]]]:
-        """Load labeled anomalies from CSV file"""
+        """Load labeled anomalies from CSV file (parsing anomaly_sequences column)"""
         try:
             if not self.labeled_anomalies_path.exists():
                 logger.warning(f"Labeled anomalies file not found: {self.labeled_anomalies_path}")
@@ -75,13 +77,22 @@ class NASADataIngestionService:
                 if spacecraft not in anomaly_labels:
                     anomaly_labels[spacecraft] = []
 
-                anomaly_labels[spacecraft].append({
-                    'anomaly_sequences': row['anomaly_sequences'],
-                    'start_index': row['start_index'],
-                    'end_index': row['end_index']
-                })
+                # Parse anomaly_sequences string to list of [start, end] pairs
+                try:
+                    sequences = json.loads(row['anomaly_sequences'].replace("'", '"'))
+                except Exception:
+                    sequences = []
 
-            logger.info(f"Loaded {len(df)} anomaly labels from CSV")
+                for seq in sequences:
+                    anomaly_labels[spacecraft].append({
+                        'chan_id': row.get('chan_id', None),
+                        'start_index': seq[0],
+                        'end_index': seq[1],
+                        'class': row.get('class', None),
+                        'num_values': row.get('num_values', None)
+                    })
+
+            logger.info(f"Loaded {sum(len(v) for v in anomaly_labels.values())} anomaly sequences from CSV")
             return anomaly_labels
 
         except Exception as e:
